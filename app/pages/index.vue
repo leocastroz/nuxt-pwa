@@ -1,27 +1,9 @@
 <template>
     <div>
        <div>
-            <h1>PWA Push Notification testando</h1>
-            
-            <div v-if="!notificationSupported" style="color: red; margin: 10px 0;">
-              ❌ Seu navegador não suporta notificações push
-            </div>
-            
-            <div v-else style="margin: 10px 0;">
-              <p>Status da permissão: <strong>{{ permissionStatus }}</strong></p>
-              <div v-if="permissionStatus === 'denied'" style="color: orange;">
-                ⚠️ Permissão negada. Habilite nas configurações do navegador:
-                <br>• Chrome: Configurações → Privacidade e segurança → Configurações do site → Notificações
-                <br>• Firefox: Preferências → Privacidade e segurança → Permissões → Notificações
-              </div>
-            </div>
-            
-            <button @click="subscribeUser" :disabled="!notificationSupported">
-              Ativar Push
-            </button>
-            <button @click="sendTest" :disabled="!notificationSupported">
-              Enviar Notificação
-            </button>
+            <h1>PWA Push Notification - return chase</h1>
+            <button @click="subscribeUser">Ativar Push</button>
+            <button @click="sendTest">Enviar Notificação</button>
         </div>
     </div>
 
@@ -30,10 +12,7 @@
 
 <script setup lang="ts">
 import { useRuntimeConfig } from 'nuxt/app';
-import { onMounted, ref } from 'vue';
-
-const notificationSupported = ref(false);
-const permissionStatus = ref('');
+import { onMounted } from 'vue';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -51,21 +30,11 @@ const subscribeUser = async () => {
     return;
   }
 
-  // Verificar se já temos permissão
-  if (Notification.permission === "granted") {
-    console.log("✅ Permissão já concedida");
-  } else if (Notification.permission === "denied") {
-    alert("Permissão para notificações foi negada. Por favor, habilite nas configurações do navegador.");
-    return;
-  } else {
-    // Solicitar permissão
-    const permission = await Notification.requestPermission();
-    permissionStatus.value = permission;
-    if (permission !== "granted") {
-      alert("Permissão negada! Habilite as notificações nas configurações do navegador e tente novamente.");
-      return;
-    }
-  }
+const permission = await Notification.requestPermission();
+if (permission !== "granted") {
+  alert("Permissão negada!");
+  return;
+}
 
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.subscribe({
@@ -93,25 +62,12 @@ const sendTest = async () => {
 };
 
 
-const checkNotificationSupport = () => {
-  if ("Notification" in window && "serviceWorker" in navigator) {
-    notificationSupported.value = true;
-    permissionStatus.value = Notification.permission;
-    console.log("🔔 Status da permissão:", Notification.permission);
-  } else {
-    notificationSupported.value = false;
-    console.log("❌ Notificações não suportadas");
-  }
-};
-
 onMounted(() => {
   console.log('App component mounted');
-  checkNotificationSupport();
-  
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/service-worker.js")
-      .then(() => console.log("✅ Service Worker registrado"))
-      .catch(err => console.error("Erro ao registrar SW:", err));
-  }
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("✅ Service Worker registrado"))
+    .catch(err => console.error("Erro ao registrar SW:", err));
+}
 });
 </script>
